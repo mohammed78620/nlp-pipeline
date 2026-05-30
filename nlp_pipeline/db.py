@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from nlp_pipeline.constants import GCPPOSTGRES
-from nlp_pipeline.settings import POSTGRES_DATABASE_PASSWORD, SQLALCHEMY_DATABASE_URL, ENV
+from nlp_pipeline.settings import POSTGRES_DATABASE_PASSWORD, USE_GCP_POSTGRES, SQLALCHEMY_DATABASE_URL, ENV
 
 logger = get_task_logger(__name__)
 
@@ -37,7 +37,10 @@ def getconn():
 
 
 try:
-    engine = create_engine(SQLALCHEMY_DATABASE_URL, creator=getconn)
+    if USE_GCP_POSTGRES:
+        engine = create_engine(SQLALCHEMY_DATABASE_URL, creator=getconn)
+    else:
+        engine = create_engine(SQLALCHEMY_DATABASE_URL)
     Session = sessionmaker(bind=engine)
 except Exception as e:
     logger.error(f"Failed to create database engine: {e}")

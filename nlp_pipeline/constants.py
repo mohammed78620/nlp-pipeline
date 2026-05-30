@@ -168,10 +168,10 @@ pe_supabase_prod_table_name = "node_products"
 
 
 class SUPABASE(Pipeline):
-    dev = {"pe_table_name": pe_supabase_dev_table_name, "url": "https://pfjgphupachjgcscreon.supabase.co"}
-    test = {"pe_table_name": pe_supabase_test_table_name, "url": "https://pfjgphupachjgcscreon.supabase.co"}
-    stage = {"pe_table_name": pe_supabase_stage_table_name, "url": "https://pfjgphupachjgcscreon.supabase.co"}
-    prod = {"pe_table_name": pe_supabase_prod_table_name, "url": "https://pfjgphupachjgcscreon.supabase.co"}
+    dev = {"pe_table_name": pe_supabase_dev_table_name, "url": "https://domain.supabase.co"}
+    test = {"pe_table_name": pe_supabase_test_table_name, "url": "https://domain.supabase.co"}
+    stage = {"pe_table_name": pe_supabase_stage_table_name, "url": "https://domain.supabase.co"}
+    prod = {"pe_table_name": pe_supabase_prod_table_name, "url": "https://domain.supabase.co"}
 
 
 product_nodes_dev_db = "dev_productdb"

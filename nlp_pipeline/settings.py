@@ -99,6 +99,7 @@ environment = environ.FileAwareEnv(
     OPENAI_TIMEOUT=(int, 20),
     SUPABASE_SERVICE_KEY=(str, None),
     POSTGRES_DATABASE_PASSWORD=(str, None),
+    USE_GCP_POSTGRES=(bool, False),
     SQLALCHEMY_DATABASE_URL=(str, "postgresql+pg8000://"),
     # BoL Product Embedding Settings
     BOL_PRODUCT_EMBEDDING_PRODUCT_BLACKLIST=(list, []),
@@ -281,6 +282,7 @@ aiplatform.init(project=GOOGLE_PROJECT_ID)
 # google cloud postgres db
 POSTGRES_DATABASE_PASSWORD = environment("POSTGRES_DATABASE_PASSWORD")
 SQLALCHEMY_DATABASE_URL = environment("SQLALCHEMY_DATABASE_URL")
+USE_GCP_POSTGRES = environment("USE_GCP_POSTGRES")
 
 # error queues
 BOL_PRODUCT_EMBEDDING_ERROR_QUEUE_NAME = environment("BOL_PRODUCT_EMBEDDING_ERROR_QUEUE_NAME")
