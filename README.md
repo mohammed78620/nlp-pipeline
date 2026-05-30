@@ -18,7 +18,7 @@ To run the development server, you need to copy your GCP filekey and then docker
 
 ```bash
 cp ~/.config/gcloud/application_default_credentials.json .application_default_credentials.json
-docker compose up -d
+docker-compose -f docker-compose.dev.yaml up -d
 ```
 
 If you receive a permission error trying to install dependencies with poetry try:
