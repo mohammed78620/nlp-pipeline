@@ -1,0 +1,37 @@
+FROM python:3.11.2
+
+ARG NLP_PIPELINE_ENV
+
+ENV NLP_PIPELINE_ENV=${NLP_PIPELINE_ENV} \
+  # python:
+  PYTHONFAULTHANDLER=1 \
+  PYTHONUNBUFFERED=1 \
+  PYTHONHASHSEED=random \
+  # pip:
+  PIP_NO_CACHE_DIR=off \
+  PIP_DISABLE_PIP_VERSION_CHECK=on \
+  PIP_DEFAULT_TIMEOUT=100 \
+  # poetry:
+  POETRY_VERSION=1.5.1 \
+  POETRY_VIRTUALENVS_CREATE=false \
+  POETRY_CACHE_DIR='/var/cache/pypoetry'
+
+# System deps:
+RUN apt-get update && apt-get install -y python3 python3-pip git pkg-config libicu-dev && rm -rf /var/lib/apt/lists/*
+RUN export ICU_VERSION=`pkg-config --modversion icu-i18n`
+RUN pip3 install celery pyicu
+RUN pip install "virtualenv==20.21.1" && pip install "poetry==$POETRY_VERSION" && poetry --version
+RUN pip install pycld2 polyglot
+RUN pip install "git+https://github.com/mohammed78620/LSH.git@poetry_build"
+
+# Set working directory
+WORKDIR /app
+COPY pyproject.toml poetry.lock /app/
+
+# Install dependencies
+RUN poetry install --no-interaction --no-ansi --no-root
+
+# Copy project
+COPY . .
+
+ENTRYPOINT celery -A nlp_pipeline.celery_app:app worker --loglevel=INFO --pool=solo -Q directory-reader

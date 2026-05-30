@@ -1,0 +1,101 @@
+[tool.poetry]
+name = "nlp-pipeline"
+version = "2.6.0"
+description = "NLP pipeline with Celery and Rabbitmq"
+authors = ["Versed AI"]
+packages = [{include = "nlp_pipeline"}]
+
+
+[tool.poetry.dependencies]
+python = "^3.11.2"
+celery = "^5.2.7"
+beautifulsoup4 = "^4.11.1"
+sentence-splitter = "^1.4"
+ujson = "^5.3.0"
+date-guesser = "^2.1.4"
+django-environ = "^0.9.0"
+pydantic = "^2.3.0"
+logging-json = "^0.2.1"
+toml = "^0.10.2"
+abbreviations = "^0.2.5"
+google-cloud-storage = "^2.9.0"
+google-cloud-aiplatform = "^1.25.0"
+supabase = "^1.0.3"
+openai = "^0.27.8"
+cloud-sql-python-connector = {extras = ["pg8000"], version="^1.4.1"}
+SQLAlchemy = "^2.0.21"
+pgvector = "^0.2.3"
+psutil = "^5.9.5"
+inscriptis = "^2.4"
+html5lib = "^1.1"
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
+[tool.poetry.group.dev.dependencies]
+bandit = "^1.7.8"
+black = "^24.8.0"
+flake8 = "^7.0"
+pre-commit = "^3.7"
+pytest = "^7.1"
+pytest-cov = "^3.0.0"
+pytest-dotenv = "^0.5"
+isort = "^5.13"
+matplotlib = "^3.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 119
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 119
+default_section = "THIRDPARTY"
+known_first_party = []
+known_third_party = []
+
+[tool.flake8]
+max-line-length = 119
+exclude = [
+  ".git",
+  "__pycache__",
+  "build",
+  "dist",
+  "venv"
+]
+ignore = [
+  "E203",
+  "E501",
+  "W503",
+  "N807",
+  "E712"
+]
+per-file-ignores = [
+  # unused imports
+  "__init__.py: F401"
+]
+
+[tool.bandit]
+skips = ["B101"]
+
+[tool.pytest.ini_options]
+env_override_existing_values = 1
+env_files = [
+  ".env",
+  ".env.test"
+]
+
+[tool.coverage.run]
+branch = true
+omit = [
+    "nlp_pipeline/tests/*"
+]
+source = [
+    "nlp_pipeline/"
+]

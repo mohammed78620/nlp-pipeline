@@ -1,0 +1,36 @@
+# Editors
+.idea/
+.vscode/
+.devcontainer/
+setup.cfg
+
+# Environment
+.venv/
+.env
+.env.prod
+venv/
+.conda_env*
+
+# Log files
+.coverage
+logs/
+
+# Python
+__pycache__/
+.pytest_cache/
+*.egg-info/
+*.pyc
+
+# Tmp
+tmp/
+
+# Build
+dist/
+
+# Docker
+docker-compose.prod.yaml
+docker-compose.stage.yaml
+
+# Auth tokens
+.application_default_credentials.json
+application_default_credentials.json

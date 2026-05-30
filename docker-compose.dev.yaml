@@ -1,0 +1,89 @@
+services:
+    rabbit:
+        hostname: rabbit
+        image: rabbitmq:3.11-management
+        environment:
+            - RABBITMQ_DEFAULT_USER=admin
+            - RABBITMQ_DEFAULT_PASS=mypass
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        external_links:
+            - nlp-pipeline-rabbit-1:rabbit
+            - rabbit:rabbit
+
+    worker:
+        env_file:
+            - .env
+        environment:
+            - GOOGLE_APPLICATION_CREDENTIALS=/tmp/.config/gcloud/application_default_credentials.json
+            - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID}
+
+            - CELERY_BROKER_URL=amqp://admin:mypass@rabbit:5672
+
+            - ENV=development
+            - USER=${USER}
+            - APPROACH=soft
+
+            - PE_VERTEXAI_MODEL=${PE_VERTEXAI_MODEL}
+            - PE_OPENAI_PROMPT=${PE_OPENAI_PROMPT}
+            - PE_OPENAI_MODEL=${PE_OPENAI_MODEL}
+            - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+
+        build:
+            context: .
+            dockerfile: Dockerfile-worker
+        volumes:
+            - .:/app
+            - C:/Users/moham/AppData/Roaming/gcloud:/tmp/.config/gcloud
+        links:
+            - rabbit
+        depends_on:
+            - rabbit
+        ports:
+            - 5678:5678
+
+    producer:
+        env_file:
+            - .env
+        environment:
+            - GOOGLE_APPLICATION_CREDENTIALS=/tmp/.config/gcloud/application_default_credentials.json
+            - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID}
+
+            - CELERY_BROKER_URL=amqp://admin:mypass@rabbit:5672
+
+            - ENV=development
+            - USER=${USER}
+            - APPROACH=soft
+
+            - PE_VERTEXAI_MODEL=${PE_VERTEXAI_MODEL}
+            - PE_OPENAI_PROMPT=${PE_OPENAI_PROMPT}
+            - PE_OPENAI_MODEL=${PE_OPENAI_MODEL}
+
+            - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+        build:
+            context: .
+            dockerfile: Dockerfile-producer
+        volumes:
+            - .:/app
+            - C:/Users/moham/AppData/Roaming/gcloud:/tmp/.config/gcloud
+        links:
+            - rabbit
+        depends_on:
+            - rabbit
+            - worker
+
+    flower:
+        image: mher/flower:0.9.7
+        command:
+            [
+                "flower",
+                "--broker=amqp://admin:mypass@rabbit:5672//",
+                "--port=8888"
+            ]
+        ports:
+            - 8888:8888
+        depends_on:
+            - rabbit

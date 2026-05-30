@@ -1,0 +1,196 @@
+# # This is a basic workflow to help you get started with Actions
+
+# name: Main CI/CD
+
+# # Controls when the workflow will run
+# on:
+#   push:
+#     paths-ignore:
+#       - '**/*.md'
+
+
+# # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# jobs:
+#   Flake8:
+#     runs-on: ubuntu-latest
+#     container: python:3.11
+#     steps:
+
+#     - name: Check out repository code
+#       uses: actions/checkout@v3
+
+#     - run: pip install --upgrade pip
+
+#     - run: pip install flake8 pep8-naming
+
+#     - run: flake8 --per-file-ignores='*/__init__.py:F401'  --ignore='E203,E501,E712,W503,N801,N805,N807'
+
+
+#   Bandit:
+#     runs-on: ubuntu-latest
+#     container: python:3.11
+#     steps:
+
+#     - name: Check out repository code
+#       uses: actions/checkout@v3
+
+#     - run: pip install bandit
+
+#     - run: bandit -r . --skip=B101,B301,B403,B404,B603
+
+
+#   Pytest:
+#     runs-on: self-hosted
+#     container: python:3.11
+#     needs: [Flake8, Bandit]
+#     steps:
+
+#     - name: Get Code
+#       uses: actions/checkout@v3
+
+#     - name: Configure GCP credentials to have access to production python packages
+#       uses: google-github-actions/auth@v1
+#       with:
+#         service_account: github-actions-artifacts@$GCP_PRODUCTION_PROJECT_ID.iam.gserviceaccount.com
+#         credentials_json: ${{ secrets.GCP_PRODUCTION_ARTIFACT_KEY }}
+
+#     - name: Install Dependencies
+#       env:
+#         CELERY_BROKER_URL: "amqp://guest:guest@127.0.0.1:5672"
+#         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#         POSTGRES_DATABASE_PASSWORD: ${{ secrets.POSTGRES_DATABASE_PASSWORD }}
+#         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+#         ENV: "test"
+#         USER: "github_ci"
+#       run: |
+#         apt-get update
+#         apt-get install gnupg2 curl wget apt-transport-https software-properties-common -y
+#         apt-get install erlang erlang-nox erlang-base erlang-asn1 erlang-crypto erlang-eldap erlang-ftp erlang-inets erlang-mnesia erlang-os-mon erlang-parsetools erlang-public-key erlang-runtime-tools erlang-snmp erlang-ssl erlang-syntax-tools erlang-tftp erlang-tools erlang-xmerl -y
+#         apt-get install rabbitmq-server -y
+#         rabbitmq-server start -detached
+#         sleep 5
+#         rabbitmqctl start_app
+#         pip install --upgrade pip
+#         pip install keyrings.google-artifactregistry-auth
+#         apt-get -qq -y install python3 python3-pip git pkg-config libicu-dev
+#         export ICU_VERSION=`pkg-config --modversion icu-i18n`
+#         pip3 install celery pyicu
+#         pip install "poetry==1.7.1" && poetry --version
+#         poetry config virtualenvs.create true
+#         poetry add coverage
+#         poetry install $(test "$ENV" == production && echo "--no-dev") --no-interaction --no-ansi --no-root
+
+#     - name: Configure GCP credentials to have access to VertexAI dev endpoints
+#       uses: google-github-actions/auth@v1
+#       with:
+#         service_account: github-actions-vertex@development-388312.iam.gserviceaccount.com
+#         credentials_json: ${{ secrets.GCP_CICD_VERTEXAI_KEY }}
+
+#     - name: Start services
+#       env:
+#         CELERY_BROKER_URL: "amqp://guest:guest@127.0.0.1:5672"
+#         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#         POSTGRES_DATABASE_PASSWORD: ${{ secrets.POSTGRES_DATABASE_PASSWORD }}
+#         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+#         ENV: "test"
+#         USER: "github_ci"
+#       run: |
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q directory-reader --concurrency=1 --pool=solo --detach -n directory-reader@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q basic-coreference --concurrency=1 --pool=solo --detach -n basic-coreference@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q acronym-resolver --concurrency=1 --pool=solo --detach -n acronym-resolver@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q segmentation --concurrency=1 --pool=solo --detach -n segmenation@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q named-entity-recognition --concurrency=1 --pool=solo --detach -n named-entity-recognition@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q relation-extraction --concurrency=1 --pool=solo --detach -n relation-extraction@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q named-entity-linking --concurrency=1 --pool=solo --detach -n named-entity-linking@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q date-extraction --concurrency=1 --pool=solo --detach -n date-extraction@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q publish --concurrency=1 --pool=solo --detach -n publish@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q product-extraction --concurrency=1 --pool=solo --detach -n product-extraction@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q product-extraction-chatgpt --concurrency=1 --pool=solo --detach -n product-extraction-chatgpt@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q product-embedding --concurrency=1 --pool=solo --detach -n product-embedding@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q publish-product --concurrency=1 --pool=solo --detach -n publish-product@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q bol-product-embedding --concurrency=1 --pool=solo --detach -n bol-product-embedding@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q bol-product-extraction --concurrency=1 --pool=solo --detach -n bol-product-extraction@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q bol-product-extraction-precleaning --concurrency=1 --pool=solo --detach -n bol-product-extraction-precleaning@versed.ai
+#         poetry run celery -A nlp_pipeline.celery_app:app worker -Q bol-product-publish --concurrency=1 --pool=solo --detach -n bol-product-publish@versed.ai
+
+#         wget -q https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+#         chmod +x cloud_sql_proxy
+#         ./cloud_sql_proxy -instances=staging-388321:us-east1:product-db=tcp:5432 2>&1 &
+
+#     - name: Run tests
+#       env:
+#         CELERY_BROKER_URL: "amqp://guest:guest@127.0.0.1:5672"
+#         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#         POSTGRES_DATABASE_PASSWORD: ${{ secrets.POSTGRES_DATABASE_PASSWORD }}
+#         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+#         ENV: "test"
+#         USER: "gitlab_ci"
+#       run: |
+#         poetry run pytest nlp_pipeline/tests
+
+
+
+# #########################################  PACKAGING
+#   Create_And_Publish_Package:
+#     if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/production'
+#     runs-on: ubuntu-latest
+#     container: python:3.11
+#     needs: [Bandit, Flake8, Pytest]
+#     steps:
+#     - name: Checkout
+#       uses: actions/checkout@v3
+
+#     - name: Configure GCP credentials to have access to production python packages
+#       uses: google-github-actions/auth@v1
+#       with:
+#         service_account: github-actions-artifacts@$GCP_PRODUCTION_PROJECT_ID.iam.gserviceaccount.com
+#         credentials_json: ${{ secrets.GCP_PRODUCTION_ARTIFACT_KEY }}
+
+#     - name: Install Dependencies
+#       shell: bash
+#       run: |
+#         apt update
+#         apt-get install gnupg2 curl wget apt-transport-https software-properties-common -y
+#         apt -qq -y install python3 python3-pip git pkg-config libicu-dev
+#         export ICU_VERSION=`pkg-config --modversion icu-i18n`
+#         pip3 install celery pyicu keyrings.google-artifactregistry-auth
+#         pip install "poetry==1.7.1" && poetry --version
+#         poetry config virtualenvs.create true
+#         poetry install
+#         source `poetry env info --path`/bin/activate
+
+#     - name: Configure GCP credentials dev
+#       if: github.ref == 'refs/heads/dev'
+#       uses: google-github-actions/auth@v1
+#       with:
+#         service_account: github-actions-artifacts@development-388312.iam.gserviceaccount.com
+#         credentials_json: ${{ secrets.GCP_DEVELOPMENT_ARTIFACT_KEY }}
+
+#     - name: Configure GCP credentials staging
+#       if: github.ref == 'refs/heads/staging'
+#       uses: google-github-actions/auth@v1
+#       with:
+#         service_account: github-actions-artifacts@$GCP_STAGING_PROJECT_ID.iam.gserviceaccount.com
+#         credentials_json: ${{ secrets.GCP_STAGING_ARTIFACT_KEY }}
+
+#     - name: Configure GCP credentials production
+#       if: github.ref == 'refs/heads/production'
+#       uses: google-github-actions/auth@v1
+#       with:
+#         service_account: github-actions-artifacts@$GCP_PRODUCTION_PROJECT_ID.iam.gserviceaccount.com
+#         credentials_json: ${{ secrets.GCP_PRODUCTION_ARTIFACT_KEY }}
+
+#     - name: Build and push package to GCP
+#       id: build-image
+#       shell: bash
+#       run: |
+#         apt update
+#         pip install "poetry==1.7.1" && poetry --version
+#         poetry config virtualenvs.create true
+#         poetry self add gsutil keyrings.google-artifactregistry-auth
+#         poetry install
+#         source `poetry env info --path`/bin/activate
+#         case ${GITHUB_REF##*/} in 'dev') PYPI_REMOTE="https://us-east1-python.pkg.dev/development-388312/versed-pip/" ;; 'production') PYPI_REMOTE="https://us-east1-python.pkg.dev/production-388321/versed-pip/" ;; 'staging') PYPI_REMOTE="https://us-east1-python.pkg.dev/staging-388321/versed-pip/" ;; esac
+#         poetry config repositories.gcp ${PYPI_REMOTE}
+#         poetry build
+#         poetry publish -r gcp
