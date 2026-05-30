@@ -74,6 +74,18 @@ services:
         depends_on:
             - rabbit
             - worker
+    
+    product-db:
+        image: postgres:14.2-alpine
+        restart: unless-stopped
+        volumes:
+            - .postgres_data/node_products_data:/var/lib/postgres
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=password
+            - POSTGRES_DB=dev_productdb
+        ports:
+            - "5435:5432"
 
     flower:
         image: mher/flower:0.9.7
